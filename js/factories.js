@@ -47,6 +47,7 @@ ctx.fill();
 
   ctx.clearRect(0,0,500,500);
 
+  drawBuidings();
 
   if(currentlySelected) {
     console.log('selected');
@@ -61,7 +62,15 @@ ctx.fill();
 
 function drawBuidings() {
 
-  ctx.fillStyle = '#00F';
+  for(let i = 0; i < gameBuildings.length; i++) {
+    ctx.fillStyle = gameBuildings[i].color;
+    ctx.beginPath();
+    ctx.fillRect(gameBuildings[i].x, 
+                 gameBuildings[i].y, 
+                 gameBuildings[i].w, 
+                 gameBuildings[i].h);
+    
+  }
 
 
 }

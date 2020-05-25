@@ -1,0 +1,27 @@
+.container {
+  margin: auto;
+  width: 501px;
+  height: 501px;
+}
+
+#main-canvas {
+  /* width: 500px;
+  height: 500px; */
+  background: #AAA;
+}
+
+#ui-canvas {
+  width: 500px;
+  height: 50px;
+  background: #00F;
+}
+
+#house {
+  width: 100px;
+  height: 50px;
+  border: none;
+  background: #000;
+  color: #DDD;
+  font-size: 1.3rem;
+  border-radius: 4px;
+}

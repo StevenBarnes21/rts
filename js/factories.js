@@ -11,6 +11,9 @@ function Building(name, x, y, w, h, color) {
   this.w = w;
   this.h = h;
   this.color = color;
+  this.wayPointX = this.x + this.w + 5;
+  this.wayPointY = this.y + this.h/2;
+  this.selected = false;
 }
 
 function Unit(name, x, y, radius, color) {
@@ -61,11 +64,50 @@ mainCanvas.addEventListener('click', (e)=> {
   }
 });
 
+// Selects a building when the building is clicked on
+mainCanvas.addEventListener('mousedown', (e) => {
+  if(!currentlySelected) {
+    let selectedBuilding = findSelectedBuilding(e);
+
+    if(selectedBuilding) {
+      deselectAllBuildings();
+      selectedBuilding.selected = true;
+      console.log('building selected');
+    }
+  }
+});
+
+function deselectAllBuildings() {
+  for(let i = 0; i < gameBuildings.length; i++) {
+    gameBuildings[i].selected = false;
+  }
+}
+
+function findSelectedBuilding(e) {
+  // Loop through every building and see if the mouse coordinates intercept the building
+  for(let i = 0; i < gameBuildings.length; i++) {
+    if(pointIntercepts(e.offsetX, e.offsetY, gameBuildings[i])) {
+      return gameBuildings[i];
+    }
+  }
+}
+
+function pointIntercepts(x,y, building) {
+  if(x < building.x) return false;
+  if(x > (building.x + building.w)) return false;
+  if(y < building.y) return false;
+  if(y > (building.y + building.h)) return false;
+
+  return true;
+}
+
+
 const ctx = mainCanvas.getContext('2d');
 (function gameLoop() {
 
   ctx.clearRect(0,0,500,500);
   drawBuidings();
+  drawUnits();
 
   // Show the outline of the building before it is placed
   if(currentlySelected) {
@@ -79,7 +121,6 @@ const ctx = mainCanvas.getContext('2d');
 })();
 
 function drawBuidings() {
-
   for(let i = 0; i < gameBuildings.length; i++) {
     ctx.fillStyle = gameBuildings[i].color;
     ctx.beginPath();
@@ -87,6 +128,28 @@ function drawBuidings() {
                  gameBuildings[i].y, 
                  gameBuildings[i].w, 
                  gameBuildings[i].h); 
+    
+    if(gameBuildings[i].selected) {
+      ctx.strokeStyle = 'yellow';
+      ctx.strokeRect(gameBuildings[i].x - 1,
+                     gameBuildings[i].y - 1,
+                     gameBuildings[i].w + 2,
+                     gameBuildings[i].h + 2);
+      ctx.stroke();
+    }
+  }
+}
+
+function drawUnits() {
+  for(let i = 0; i < gameUnits.length; i++) {
+    ctx.fillStyle = gameUnits[i].color;
+    ctx.beginPath();
+    ctx.arc(gameUnits[i].x,
+            gameUnits[i].y,
+            gameUnits[i].radius,
+            0, 
+            Math.PI * 2, 
+            true);
   }
 }
 

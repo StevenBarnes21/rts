@@ -1,9 +1,11 @@
 "use strict"
 
-const house = document.getElementById('house');
-const gameBuildings = [];
 
-function Building(x, y, w, h, color) {
+const gameBuildings = [];
+const gameUnits = [];
+
+function Building(name, x, y, w, h, color) {
+  this.name = name;
   this.x = x;
   this.y = y;
   this.w = w;
@@ -11,19 +13,37 @@ function Building(x, y, w, h, color) {
   this.color = color;
 }
 
+function Unit(name, x, y, radius, color) {
+  this.name = name;
+  this.x = x;
+  this.y = y;
+  this.radius = radius;
+  this.color = color;
+  this.speed = 0;
+}
+
 let currentlySelected = null;
+
+// House button clicked
+const house = document.getElementById('house');
 house.addEventListener('click', (e) => {
-  currentlySelected = new Building(null, null, 30, 30, '#00F');
-  console.log('line 17',currentlySelected);
+  currentlySelected = new Building('house', null, null, 30, 30, '#00F');
 });
 
-let mouseX = 150;
-let mouseY = 150;
+// Barracks button clicked
+const barracks = document.getElementById('barracks');
+barracks.addEventListener('click', (e) => {
+  currentlySelected = new Building('barracks', null, null, 40, 40, '#F22');
+});
+
+let mouseX = 0;
+let mouseY = 0;
 const mainCanvas = document.getElementById('main-canvas');
 mainCanvas.width = 500;
 mainCanvas.height = 500;
 
-// Updates the mouse position
+// Updates the mouse position when the mouse is moved which is needed
+// to be able to show a building outline before the building is placed
 mainCanvas.addEventListener('mousemove', (e) => {
   mouseX = e.offsetX;
   mouseY = e.offsetY;
@@ -42,18 +62,16 @@ mainCanvas.addEventListener('click', (e)=> {
 });
 
 const ctx = mainCanvas.getContext('2d');
-
 (function gameLoop() {
 
   ctx.clearRect(0,0,500,500);
-
   drawBuidings();
 
   // Show the outline of the building before it is placed
   if(currentlySelected) {
     ctx.beginPath();
     ctx.strokeStyle = '#00F';
-    ctx.strokeRect(mouseX, mouseY, 30, 30);
+    ctx.strokeRect(mouseX, mouseY, currentlySelected.w, currentlySelected.h);
     ctx.stroke();
   }
 
@@ -88,7 +106,8 @@ function addBuilding(building) {
     }
   }
 
-  // If the code reaches this part then no collisions have occurred.
+  // If the code reaches this part then no collisions have occurred so the building
+  // can be added to the array
   gameBuildings.push(building);
   return true;
 }

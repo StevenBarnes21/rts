@@ -141,6 +141,7 @@ const uiCanvas = document.getElementById('ui-canvas');
 uiCanvas.width = 500;
 uiCanvas.height = 50;
 const uiCtx = uiCanvas.getContext('2d');
+uiCtx.font = "bold 16px Arial";
 
 function clearContextMenu() {
   uiCtx.clearRect(0,0,500,50);
@@ -148,17 +149,34 @@ function clearContextMenu() {
 
 function displayHouseContextMenu() {
   clearContextMenu();
-  uiCtx.fillStyle = '#00F';
-  uiCtx.fillRect(2,2,49,49);
+  let worker = 'Worker';
+  let startingX = buildContextButton(worker, 0, 0, 50, '#00F', '#FFF') + 2;
+  // uiCtx.fillStyle = '#00F';
+  // uiCtx.fillRect(2,2,75,49);
+  
+  // // draw text
+  // uiCtx.fillStyle = '#FFF';
+  // uiCtx.fillText("Worker", 5, 32);
 }
 
 function displayBarracksContextMenu() {
   clearContextMenu();
-  uiCtx.fillStyle = '#F00';
-  uiCtx.fillRect(2,2,49,49);
 
-  uiCtx.fillStyle = '#0F0';
-  uiCtx.fillRect(50,2,49,49);
+  let swordsman = 'Swordsman';
+  let archer = 'Archer';
+  let startingX = buildContextButton(swordsman, 0, 0, 50, '#F00', '#000') + 5;
+  buildContextButton(archer, startingX, 0, 50, '#0F0', '#000');
+}
+
+function buildContextButton(text, x, y, height, bgColor, textColor) {
+  let textWidth = uiCtx.measureText(text).width + 4;
+  uiCtx.fillStyle = bgColor;
+  uiCtx.fillRect(x, y, textWidth, height);
+  uiCtx.fillStyle = textColor;
+  uiCtx.fillText(text, x+2, 32);
+
+  // So you know where to start with the next button
+  return textWidth;
 }
 
 function drawBuidings() {

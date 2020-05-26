@@ -3,6 +3,7 @@
 
 const gameBuildings = [];
 const gameUnits = [];
+const gameResources = [];
 
 function Building(name, x, y, w, h, color) {
   this.name = name;
@@ -23,6 +24,31 @@ function Unit(name, x, y, radius, color) {
   this.radius = radius;
   this.color = color;
   this.speed = 0;
+}
+
+function Resource(name, x, y, w, h, color, health, amount) {
+  this.name = name;
+  this.x = x;
+  this.y = y;
+  this.w = w;
+  this.h = h;
+  this.color = color;
+  this.health = health;
+  this.amount = amount;
+
+  this.decreaseAmount = () => {
+    if(this.amount > 0) {
+      this.amount--;
+    }
+  }
+
+  this.takeDamage = (amount) => {
+    if(this.health - amount >= 0) {
+      this.health -= amount;
+    } else {
+      this.health = 0;
+    }
+  }
 }
 
 let currentlySelected = null;
@@ -151,12 +177,6 @@ function displayHouseContextMenu() {
   clearContextMenu();
   let worker = 'Worker';
   let startingX = buildContextButton(worker, 0, 0, 50, '#00F', '#FFF') + 2;
-  // uiCtx.fillStyle = '#00F';
-  // uiCtx.fillRect(2,2,75,49);
-  
-  // // draw text
-  // uiCtx.fillStyle = '#FFF';
-  // uiCtx.fillText("Worker", 5, 32);
 }
 
 function displayBarracksContextMenu() {
@@ -176,7 +196,7 @@ function buildContextButton(text, x, y, height, bgColor, textColor) {
   uiCtx.fillRect(x, y, textWidth, height);
   uiCtx.fillStyle = textColor;
   uiCtx.fillText(text, x+2, 32);
-
+  
   // So you know where to start with the next button
   return textWidth;
 }

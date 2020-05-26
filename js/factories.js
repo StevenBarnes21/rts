@@ -69,10 +69,12 @@ mainCanvas.addEventListener('mousedown', (e) => {
   if(!currentlySelected) {
     let selectedBuilding = findSelectedBuilding(e);
 
-    if(selectedBuilding) {
-      deselectAllBuildings();
+    deselectAllBuildings();
+
+    if(selectedBuilding) {  
       selectedBuilding.selected = true;
-    }
+      displayContextMenu(selectedBuilding);
+    } 
   }
 });
 
@@ -108,6 +110,7 @@ const ctx = mainCanvas.getContext('2d');
   ctx.clearRect(0,0,500,500);
   drawBuidings();
   drawUnits();
+  
 
   // Show the outline of the building before it is placed
   if(currentlySelected) {
@@ -119,6 +122,44 @@ const ctx = mainCanvas.getContext('2d');
 
   requestAnimationFrame(gameLoop);
 })();
+
+// Display the context menu for the currently selected building
+function displayContextMenu(building) {
+  if(building) {
+    switch(building.name) {
+      case 'house':
+        displayHouseContextMenu();
+        break;
+      case 'barracks':
+        displayBarracksContextMenu();
+        break;
+    }
+  }
+}
+
+const uiCanvas = document.getElementById('ui-canvas');
+uiCanvas.width = 500;
+uiCanvas.height = 50;
+const uiCtx = uiCanvas.getContext('2d');
+
+function clearContextMenu() {
+  uiCtx.clearRect(0,0,500,50);
+}
+
+function displayHouseContextMenu() {
+  clearContextMenu();
+  uiCtx.fillStyle = '#00F';
+  uiCtx.fillRect(2,2,49,49);
+}
+
+function displayBarracksContextMenu() {
+  clearContextMenu();
+  uiCtx.fillStyle = '#F00';
+  uiCtx.fillRect(2,2,49,49);
+
+  uiCtx.fillStyle = '#0F0';
+  uiCtx.fillRect(50,2,49,49);
+}
 
 function drawBuidings() {
   for(let i = 0; i < gameBuildings.length; i++) {

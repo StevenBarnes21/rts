@@ -4,6 +4,7 @@ const gameBuildings = [];
 const gameUnits = [];
 const gameResources = [];
 const resources = [100, 0, 0]; //wood, stone, metal
+let population = 1;
 
 (function setup() {
   addResources();
@@ -28,6 +29,10 @@ function Unit(name, x, y, radius, color) {
   this.radius = radius;
   this.color = color;
   this.speed = 0;
+
+  this.setSpeed = (speed) => {
+    this.speed = speed;
+  }
 }
 
 function Resource(name, x, y, w, h, color, health, amount) {
@@ -101,7 +106,8 @@ mainCanvas.addEventListener('mousedown', (e) => {
     let selectedBuilding = findSelectedBuilding(e);
 
     deselectAllBuildings();
-
+    clearContextMenu();
+    currentlySelectedBuilding = null;
     if(selectedBuilding) {  
       selectedBuilding.selected = true;
       displayContextMenu(selectedBuilding);
@@ -134,14 +140,56 @@ function pointIntercepts(x,y, building) {
   return true;
 }
 
+const resourcesCanvas = document.getElementById('resources-canvas');
+resourcesCanvas.width = 500;
+resourcesCanvas.height = 25;
+const resourcesCtx = resourcesCanvas.getContext('2d');
 
+function drawCurrentResourcesUI() {
+  const ONE_QUARTER = 125;
+  
+  // Wood
+  resourcesCtx.fillStyle = '#0A0';
+  resourcesCtx.fillRect(0, 0, ONE_QUARTER, 25);
+  
+  // Stone
+  resourcesCtx.fillStyle = '#BBB';
+  resourcesCtx.fillRect(ONE_QUARTER, 0, ONE_QUARTER, 25);
+  
+  // Metal
+  resourcesCtx.fillStyle = '#F93';
+  resourcesCtx.fillRect(ONE_QUARTER * 2, 0, ONE_QUARTER, 25);
+
+  // Population
+  resourcesCtx.fillStyle = '#00D';
+  resourcesCtx.fillRect(ONE_QUARTER * 3, 0, ONE_QUARTER, 25);
+
+  // Data
+  resourcesCtx.fillStyle = '#000';
+  resourcesCtx.font = "bold 18px Arial";
+  let woodData = resources[0];
+  resourcesCtx.fillText('WOOD: ' + woodData, 5, 19);
+  
+  let stoneData = resources[1];
+  resourcesCtx.fillText('STONE: ' + stoneData, ONE_QUARTER + 5, 19);
+
+  let metalData = resources[2];
+  resourcesCtx.fillText('METAL: ' + metalData, ONE_QUARTER * 2 + 5, 19);
+  
+  let populationData = gameUnits.length;
+  resourcesCtx.fillText('POP: ' + populationData, ONE_QUARTER * 3 + 5, 19);
+}
+
+// GAME LOOP *************************
 const ctx = mainCanvas.getContext('2d');
+
 (function gameLoop() {
 
   ctx.clearRect(0,0,500,500);
   drawBuidings();
   drawUnits();
   drawResources();
+  drawCurrentResourcesUI();
 
   // Show the outline of the building before it is placed
   if(currentlySelectedMenuItem) {
@@ -178,6 +226,30 @@ uiCanvas.height = 50;
 const uiCtx = uiCanvas.getContext('2d');
 uiCtx.font = "bold 16px Arial";
 
+// TODO: WORKING ON THIS
+uiCanvas.addEventListener('click', (e) => {
+  build(currentlySelectedBuilding, e.offsetX, e.offsetY);
+});
+
+// TODO: AND THIS
+function build(whatBuildingIsSelected, mouseClickedX, mouseClickedY) {
+  if(whatBuildingIsSelected) {
+    console.log(mouseClickedX, mouseClickedY);
+    switch(whatBuildingIsSelected) {
+      case 'house':
+        if(mouseClickedX < 61) {
+          buildWorker();
+        }
+      break;
+    }
+
+  }
+}
+
+function buildWorker() {
+  gameUnits.push(new Unit('worker', 100, 100, 40, '#000'));
+}
+
 function clearContextMenu() {
   uiCtx.clearRect(0,0,500,50);
 }
@@ -199,14 +271,19 @@ function displayBarracksContextMenu() {
   buildContextButton(spearman, startingX, 0,  50, '#00F', '#000') + 3;
 }
 
+function clearContextMenu() {
+  uiCtx.fillStyle = '#AAA';
+  uiCtx.fillRect(0,0,500,50);
+}
+
 function buildContextButton(text, x, y, height, bgColor, textColor) {
-  let textWidth = uiCtx.measureText(text).width + 4;
+  let textWidth = uiCtx.measureText(text).width + 8;
   uiCtx.fillStyle = bgColor;
   uiCtx.fillRect(x, y, textWidth, height);
   uiCtx.fillStyle = textColor;
-  uiCtx.fillText(text, x+2, 32);
+  uiCtx.fillText(text, x+4, 32);
   
-  // So you know where to start with the next button
+  // Return value so you know where to start with the next button
   return textWidth;
 }
 
@@ -241,6 +318,7 @@ function drawUnits() {
             0, 
             Math.PI * 2, 
             true);
+    ctx.fill();
   }
 }
 
@@ -259,6 +337,13 @@ function addBuilding(building) {
  
   // Edge case: There are no buildings added yet 
   if(gameBuildings.length === 0) {
+   
+    // Check if the building collides with any resource
+    for(let i = 0; i < gameResources.length; i++) {
+      if(collides(building, gameResources[i])) {
+        return false;
+      }
+    }
     gameBuildings.push(building);
     return true;
   }
@@ -267,6 +352,13 @@ function addBuilding(building) {
   for(let i = 0; i < gameBuildings.length; i++) {
     if(collides(building, gameBuildings[i])) {
       return false;    
+    }
+  }
+
+  // Check if the building collides with any resource
+  for(let i = 0; i < gameResources.length; i++) {
+    if(collides(building, gameResources[i])) {
+      return false;
     }
   }
 
@@ -295,13 +387,24 @@ function addResources() {
 
   // Wood
   for(let i = 0; i < 10; i++) {
-    let x = Math.floor(Math.random() * 490);
-    let y = Math.floor(Math.random() * 490);
+    let x = Math.floor(Math.random() * 480);
+    let y = Math.floor(Math.random() * 480);
 
-    let wood = new Resource('wood', x, y, 10, 10, '#0D0', 100, 1000);
+    let wood = new Resource('wood', x, y, 20, 20, '#0A0', 100, 1000);
+    
     gameResources.push(wood);
   }
-  
+
+  // Stone
+  for(let i = 0; i < 5; i++) {
+
+    let x = Math.floor(Math.random() * 470);
+    let y = Math.floor(Math.random() * 470);
+
+    let stone = new Resource('stone', x, y, 30, 30, '#777', 100, 5000);
+
+    gameResources.push(stone);
+  }
 }
 
 

@@ -4,6 +4,13 @@
   height: 501px;
 }
 
+#resources-canvas {
+  width: 500px;
+  height: 25px;
+  background: #DDD;
+  color: #FFF;
+}
+
 #main-canvas {
   /* width: 500px;
   height: 500px; */

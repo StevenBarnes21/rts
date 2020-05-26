@@ -164,8 +164,10 @@ function displayBarracksContextMenu() {
 
   let swordsman = 'Swordsman';
   let archer = 'Archer';
-  let startingX = buildContextButton(swordsman, 0, 0, 50, '#F00', '#000') + 5;
-  buildContextButton(archer, startingX, 0, 50, '#0F0', '#000');
+  let spearman = "Spearman";
+  let startingX = buildContextButton(swordsman, 0, 0, 50, '#F00', '#000') + 3;
+  startingX = buildContextButton(archer, startingX, 0, 50, '#0F0', '#000') + startingX + 3;
+  buildContextButton(spearman, startingX, 0,  50, '#00F', '#000') + 3;
 }
 
 function buildContextButton(text, x, y, height, bgColor, textColor) {

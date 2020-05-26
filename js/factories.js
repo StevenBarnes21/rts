@@ -72,7 +72,6 @@ mainCanvas.addEventListener('mousedown', (e) => {
     if(selectedBuilding) {
       deselectAllBuildings();
       selectedBuilding.selected = true;
-      console.log('building selected');
     }
   }
 });
@@ -92,6 +91,7 @@ function findSelectedBuilding(e) {
   }
 }
 
+// Find out if a point intercepts inside a building
 function pointIntercepts(x,y, building) {
   if(x < building.x) return false;
   if(x > (building.x + building.w)) return false;
@@ -131,6 +131,7 @@ function drawBuidings() {
     
     if(gameBuildings[i].selected) {
       ctx.strokeStyle = 'yellow';
+      ctx.lineWidth = 2;
       ctx.strokeRect(gameBuildings[i].x - 1,
                      gameBuildings[i].y - 1,
                      gameBuildings[i].w + 2,
@@ -164,7 +165,6 @@ function addBuilding(building) {
   // Loop over every building and check no buildings collide with this one
   for(let i = 0; i < gameBuildings.length; i++) {
     if(collides(building, gameBuildings[i])) {
-      console.log('collides');
       return false;    
     }
   }
@@ -179,13 +179,11 @@ function collides(objA, objB) {
 
   // If objA clears both the left and right sides of objB then y does not matter
   if( (objA.x + objA.w) < objB.x || objA.x > (objB.x + objB.w) ){
-    console.log('clears x');
     return false;
   } 
 
   // If objA clears both the top and bottom sides of objB then x does not matter 
   if( (objA.y + objA.h) < objB.y || objA.y > (objB.y + objB.h) ) {
-    console.log('clears y');
     return false;
   } 
 

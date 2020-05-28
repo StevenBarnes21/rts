@@ -6,6 +6,100 @@ const gameResources = [];
 const resources = [100, 0, 0]; //wood, stone, metal
 let population = 1;
 
+let game = {
+  currentlySelectedMenuItem: null,
+  currentlySelectedBuilding: null,
+  mouseX: 0,
+  mouseY: 0,
+  init: function() {
+    game.mainCanvas = document.getElementById('main-canvas');
+    game.mainCanvas.width = 500;
+    game.mainCanvas.height = 500;
+    game.ctx = game.mainCanvas.getContext('2d');
+  },
+  addEventListeners : function() {
+    // House button clicked
+    let house = document.getElementById('house');
+    house.addEventListener('click', (e) => {
+      game.currentlySelectedMenuItem = new Building('house', null, null, 30, 30, '#00F');
+    });
+    
+    // Barracks button clicked
+    const barracks = document.getElementById('barracks');
+    barracks.addEventListener('click', (e) => {
+      game.currentlySelectedMenuItem = new Building('barracks', null, null, 40, 40, '#F22');
+    });
+
+    // Updates the mouse position when the mouse is moved which is needed
+    // to be able to show a building outline before the building is placed
+    game.mainCanvas.addEventListener('mousemove', (e) => {
+      game.mouseX = e.offsetX;
+      game.mouseY = e.offsetY;
+    });
+
+    // Adds a building if one has already been selected
+    game.mainCanvas.addEventListener('click', (e)=> {
+      if(game.currentlySelectedMenuItem) {
+        game.currentlySelectedMenuItem.x = game.mouseX;
+        game.currentlySelectedMenuItem.y = game.mouseY;
+        let added = addBuilding(game.currentlySelectedMenuItem);
+
+        if(added) 
+          game.currentlySelectedMenuItem = null;
+      }
+   });
+
+   // Event handler for selecting units
+   game.mainCanvas.addEventListener('click', (e) => {
+     let x = e.offsetX;
+     let y = e.offsetY;
+
+     for(let i = 0; i < gameUnits.length; i++) {
+       if(pointInterceptsUnit(x,y,gameUnits[i])){
+         console.log('unit selected');
+         gameUnits[i].selected = true;
+       }
+     }
+   });
+
+   // Selects a building when the building is clicked on
+   game.mainCanvas.addEventListener('mousedown', (e) => {
+     if(!game.currentlySelectedMenuItem) {
+       let selectedBuilding = findSelectedBuilding(e);
+
+       deselectAllBuildings();
+       // deselectAllUnits();
+       clearContextMenu();
+       game.currentlySelectedBuilding = null;
+       if(selectedBuilding) {  
+         selectedBuilding.selected = true;
+         displayContextMenu(selectedBuilding);
+       } 
+     }
+   });
+   
+   // Right click
+   game.mainCanvas.addEventListener('contextmenu', (e) => {
+     e.preventDefault();
+     let target = new Target(game.mouseX, game.mouseY, null);
+
+     for(let i = 0; i < gameUnits.length; i++) {
+    
+       if(gameUnits[i].selected) {
+         console.log('adding target');
+         console.log(target);
+         gameUnits[i].addTarget(target);
+       } 
+     }
+   });
+
+    // end eventlisteners
+  },
+
+};
+game.init();
+game.addEventListeners();
+
 (function setup() {
   addResources();
 })();
@@ -97,91 +191,6 @@ function Resource(name, x, y, w, h, color, health, amount) {
   }
 }
 
-let currentlySelectedMenuItem = null;
-let currentlySelectedBuilding = null;
-
-// House button clicked
-const house = document.getElementById('house');
-house.addEventListener('click', (e) => {
-  currentlySelectedMenuItem = new Building('house', null, null, 30, 30, '#00F');
-});
-
-// Barracks button clicked
-const barracks = document.getElementById('barracks');
-barracks.addEventListener('click', (e) => {
-  currentlySelectedMenuItem = new Building('barracks', null, null, 40, 40, '#F22');
-});
-
-let mouseX = 0;
-let mouseY = 0;
-const mainCanvas = document.getElementById('main-canvas');
-mainCanvas.width = 500;
-mainCanvas.height = 500;
-
-// Updates the mouse position when the mouse is moved which is needed
-// to be able to show a building outline before the building is placed
-mainCanvas.addEventListener('mousemove', (e) => {
-  mouseX = e.offsetX;
-  mouseY = e.offsetY;
-});
-
-// Adds a building if one has already been selected
-mainCanvas.addEventListener('click', (e)=> {
-  if(currentlySelectedMenuItem) {
-    currentlySelectedMenuItem.x = mouseX;
-    currentlySelectedMenuItem.y = mouseY;
-    let added = addBuilding(currentlySelectedMenuItem);
-
-    if(added) 
-      currentlySelectedMenuItem = null;
-  }
-});
-
-// Event handler for selecting units
-mainCanvas.addEventListener('click', (e) => {
-  let x = e.offsetX;
-  let y = e.offsetY;
-
-  for(let i = 0; i < gameUnits.length; i++) {
-    if(pointInterceptsUnit(x,y,gameUnits[i])){
-      console.log('unit selected');
-      gameUnits[i].selected = true;
-    }
-  }
-});
-
-// Selects a building when the building is clicked on
-mainCanvas.addEventListener('mousedown', (e) => {
-  if(!currentlySelectedMenuItem) {
-    let selectedBuilding = findSelectedBuilding(e);
-
-    deselectAllBuildings();
-    // deselectAllUnits();
-    clearContextMenu();
-    currentlySelectedBuilding = null;
-    if(selectedBuilding) {  
-      selectedBuilding.selected = true;
-      displayContextMenu(selectedBuilding);
-    } 
-  }
-});
-
-// Right click
-mainCanvas.addEventListener('contextmenu', (e) => {
-  e.preventDefault();
-  let target = new Target(mouseX, mouseY, null);
-
-  for(let i = 0; i < gameUnits.length; i++) {
-    
-    if(gameUnits[i].selected) {
-      console.log('adding target');
-      console.log(target);
-      gameUnits[i].addTarget(target);
-    } 
-  }
-});
-
-
 function deselectAllBuildings() {
   for(let i = 0; i < gameBuildings.length; i++) {
     gameBuildings[i].selected = false;
@@ -267,11 +276,9 @@ function drawCurrentResourcesUI() {
 }
 
 // GAME LOOP *************************
-const ctx = mainCanvas.getContext('2d');
-
 (function gameLoop() {
 
-  ctx.clearRect(0,0,500,500);
+  game.ctx.clearRect(0,0,500,500);
   drawBuidings();
   updateUnits();
   drawUnits();
@@ -279,11 +286,14 @@ const ctx = mainCanvas.getContext('2d');
   drawCurrentResourcesUI();
 
   // Show the outline of the building before it is placed
-  if(currentlySelectedMenuItem) {
-    ctx.beginPath();
-    ctx.strokeStyle = '#00F';
-    ctx.strokeRect(mouseX, mouseY, currentlySelectedMenuItem.w, currentlySelectedMenuItem.h);
-    ctx.stroke();
+  if(game.currentlySelectedMenuItem) {
+    game.ctx.beginPath();
+    game.ctx.strokeStyle = '#00F';
+    game.ctx.strokeRect(game.mouseX, 
+                        game.mouseY, 
+                        game.currentlySelectedMenuItem.w, 
+                        game.currentlySelectedMenuItem.h);
+    game.ctx.stroke();
   }
 
   requestAnimationFrame(gameLoop);
@@ -292,7 +302,7 @@ const ctx = mainCanvas.getContext('2d');
 // Display the context menu for the currently selected building
 function displayContextMenu(building) {
   if(building) {
-    currentlySelectedBuilding = building;
+    game.currentlySelectedBuilding = building;
     switch(building.name) {
       case 'house':
         displayHouseContextMenu();
@@ -314,7 +324,7 @@ uiCtx.font = "bold 16px Arial";
 
 // TODO: WORKING ON THIS
 uiCanvas.addEventListener('click', (e) => {
-  build(currentlySelectedBuilding, e.offsetX, e.offsetY);
+  build(game.currentlySelectedBuilding, e.offsetX, e.offsetY);
 });
 
 // TODO: AND THIS
@@ -383,21 +393,21 @@ function buildContextButton(text, x, y, height, bgColor, textColor) {
 
 function drawBuidings() {
   for(let i = 0; i < gameBuildings.length; i++) {
-    ctx.fillStyle = gameBuildings[i].color;
-    ctx.beginPath();
-    ctx.fillRect(gameBuildings[i].x, 
+    game.ctx.fillStyle = gameBuildings[i].color;
+    game.ctx.beginPath();
+    game.ctx.fillRect(gameBuildings[i].x, 
                  gameBuildings[i].y, 
                  gameBuildings[i].w, 
                  gameBuildings[i].h); 
     
     if(gameBuildings[i].selected) {
-      ctx.strokeStyle = 'yellow';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(gameBuildings[i].x - 1,
+      game.ctx.strokeStyle = 'yellow';
+      game.ctx.lineWidth = 2;
+      game.ctx.strokeRect(gameBuildings[i].x - 1,
                      gameBuildings[i].y - 1,
                      gameBuildings[i].w + 2,
                      gameBuildings[i].h + 2);
-      ctx.stroke();
+      game.ctx.stroke();
     }
   }
 }
@@ -411,35 +421,35 @@ function updateUnits() {
 
 function drawUnits() {
   for(let i = 0; i < gameUnits.length; i++) {
-    ctx.fillStyle = gameUnits[i].color;
-    ctx.beginPath();
-    ctx.arc(gameUnits[i].x,
+    game.ctx.fillStyle = gameUnits[i].color;
+    game.ctx.beginPath();
+    game.ctx.arc(gameUnits[i].x,
             gameUnits[i].y,
             gameUnits[i].radius,
             0, 
             Math.PI * 2, 
             true);
-    ctx.fill();
+    game.ctx.fill();
 
     if(gameUnits[i].selected) {
-      ctx.fillStyle = 'yellow';
-      ctx.beginPath();
-      ctx.arc(gameUnits[i].x,
+      game.ctx.fillStyle = 'yellow';
+      game.ctx.beginPath();
+      game.ctx.arc(gameUnits[i].x,
               gameUnits[i].y,
               gameUnits[i].radius+2,
               0,
               Math.PI * 2,
               true);
-      ctx.stroke();
+      game.ctx.stroke();
     }
   }
 }
 
 function drawResources() {
   for(let i = 0; i < gameResources.length; i++) {
-    ctx.fillStyle = gameResources[i].color;
-    ctx.beginPath();
-    ctx.fillRect(gameResources[i].x,
+    game.ctx.fillStyle = gameResources[i].color;
+    game.ctx.beginPath();
+    game.ctx.fillRect(gameResources[i].x,
                  gameResources[i].y,
                  gameResources[i].w,
                  gameResources[i].h);

@@ -17,9 +17,14 @@ function Building(name, x, y, w, h, color) {
   this.w = w;
   this.h = h;
   this.color = color;
-  this.wayPointX = this.x + this.w + 5;
-  this.wayPointY = this.y + this.h/2;
+  this.wayPointX = null;
+  this.wayPointY = null;
   this.selected = false;
+
+  this.setWaypoint = () => {
+    this.wayPointX = this.x - 10;
+    this.wayPointY = this.y;
+  }
 }
 
 function Unit(name, x, y, radius, color) {
@@ -205,13 +210,12 @@ const ctx = mainCanvas.getContext('2d');
 // Display the context menu for the currently selected building
 function displayContextMenu(building) {
   if(building) {
+    currentlySelectedBuilding = building;
     switch(building.name) {
       case 'house':
-        currentlySelectedBuilding = 'house';
         displayHouseContextMenu();
         break;
       case 'barracks':
-        currentlySelectedBuilding = 'barracks';
         displayBarracksContextMenu();
         break;
       default:
@@ -234,11 +238,11 @@ uiCanvas.addEventListener('click', (e) => {
 // TODO: AND THIS
 function build(whatBuildingIsSelected, mouseClickedX, mouseClickedY) {
   if(whatBuildingIsSelected) {
-    console.log(mouseClickedX, mouseClickedY);
-    switch(whatBuildingIsSelected) {
+    console.log(whatBuildingIsSelected, mouseClickedX, mouseClickedY);
+    switch(whatBuildingIsSelected.name) {
       case 'house':
         if(mouseClickedX < 61) {
-          buildWorker();
+          buildWorker(whatBuildingIsSelected);
         }
       break;
     }
@@ -246,8 +250,16 @@ function build(whatBuildingIsSelected, mouseClickedX, mouseClickedY) {
   }
 }
 
-function buildWorker() {
-  gameUnits.push(new Unit('worker', 100, 100, 40, '#000'));
+function buildWorker(selectedBuilding) {
+  console.log('building worker');
+
+  if(!selectedBuilding.wayPointX || !selectedBuilding.wayPointY) {
+    selectedBuilding.setWaypoint();
+  }
+  gameUnits.push(new Unit('worker', 
+                          selectedBuilding.wayPointX,
+                          selectedBuilding.wayPointY, 
+                          5, '#000'));
 }
 
 function clearContextMenu() {
@@ -367,6 +379,8 @@ function addBuilding(building) {
   gameBuildings.push(building);
   return true;
 }
+
+
 
 function collides(objA, objB) {
 

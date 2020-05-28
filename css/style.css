@@ -1,3 +1,7 @@
+body {
+  user-select: none; /* prevent text frombeing selected and turning blue */
+}
+
 .container {
   margin: auto;
   width: 501px;
@@ -12,8 +16,6 @@
 }
 
 #main-canvas {
-  /* width: 500px;
-  height: 500px; */
   background: #AAA;
 }
 

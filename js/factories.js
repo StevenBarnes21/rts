@@ -4,13 +4,21 @@ const gameBuildings = [];
 const gameUnits = [];
 const gameResources = [];
 const resources = [100, 0, 0]; //wood, stone, metal
-let population = 1;
+let population = 0;
+let maxPopulation = 0;
 
 let game = {
   currentlySelectedMenuItem: null,
   currentlySelectedBuilding: null,
+  currentlySelectedUnits: [],
   mouseX: 0,
   mouseY: 0,
+  mousedownX: -1,
+  mousedownY: -1,
+  mouseupX: 0,
+  mouseupY: 0,
+  mousedown: false,
+  drawSelectionBox: false,
   init: function() {
     game.mainCanvas = document.getElementById('main-canvas');
     game.mainCanvas.width = 500;
@@ -22,14 +30,19 @@ let game = {
     // House button clicked
     let house = document.getElementById('house');
     house.addEventListener('click', (e) => {
-      game.currentlySelectedMenuItem = new Building('house', null, null, 30, 30, '#00F');
+      if(resources[0] >= 20) {
+        game.currentlySelectedMenuItem = new Building('house', null, null, 30, 30, '#00F');
+      }
     });
     
     // Barracks button clicked
     const barracks = document.getElementById('barracks');
     barracks.addEventListener('click', (e) => {
-      game.currentlySelectedMenuItem = new Building('barracks', null, null, 40, 40, '#F22');
+      if(resources[0] >= 50) {
+        game.currentlySelectedMenuItem = new Building('barracks', null, null, 40, 40, '#F22');
+      }
     });
+
 
     // Updates the mouse position when the mouse is moved which is needed
     // to be able to show a building outline before the building is placed
@@ -57,9 +70,44 @@ let game = {
 
      for(let i = 0; i < gameUnits.length; i++) {
        if(pointInterceptsUnit(x,y,gameUnits[i])){
+         deselectAllUnits();
          console.log('unit selected');
          gameUnits[i].selected = true;
+         game.currentlySelectedUnits.push(gameUnits[i]);
        }
+     }
+   });
+
+   game.mainCanvas.addEventListener('mousedown', (e) => {
+     
+     if(game.mousedownX < 0 && game.mousedownY < 0) {
+       game.mousedownX = e.offsetX;
+       game.mousedownY = e.offsetY;
+       game.mousedown = true;
+     } 
+
+   });
+
+   game.mainCanvas.addEventListener('mousemove', (e) => {
+     if(game.mousedown) {
+      let dx = Math.abs(game.mousedownX - e.offsetX);
+      let dy = Math.abs(game.mousedownY - e.offsetY);
+ 
+      if(dx > 1 && dy > 1) {
+        game.drawSelectionBox = true;
+      } 
+     }
+   });
+
+   game.mainCanvas.addEventListener('mouseup', (e) => {
+     if(game.mousedown) {
+
+       selectAllUnitsWithinSelectionBox();
+
+       game.mousedown = false;
+       game.drawSelectionBox = false;
+       game.mousedownX = -1;
+       game.mousedownY = -1;
      }
    });
 
@@ -67,11 +115,10 @@ let game = {
    game.mainCanvas.addEventListener('mousedown', (e) => {
      if(!game.currentlySelectedMenuItem) {
        let selectedBuilding = findSelectedBuilding(e);
-
        deselectAllBuildings();
-       // deselectAllUnits();
        clearContextMenu();
        game.currentlySelectedBuilding = null;
+
        if(selectedBuilding) {  
          selectedBuilding.selected = true;
          displayContextMenu(selectedBuilding);
@@ -79,7 +126,7 @@ let game = {
      }
    });
    
-   // Right click
+   // Right click - used for adding a target for units
    game.mainCanvas.addEventListener('contextmenu', (e) => {
      e.preventDefault();
      let target = new Target(game.mouseX, game.mouseY, null);
@@ -105,6 +152,7 @@ game.init();
   addResources();
 })();
 
+// Building object used for storing the data for each building.
 function Building(name, x, y, w, h, color) {
   this.name = name;
   this.x = x;
@@ -122,18 +170,38 @@ function Building(name, x, y, w, h, color) {
   }
 }
 
+function selectAllUnitsWithinSelectionBox() {
+  // go through all units and find all units that are within the boundry
+
+  for(let i = 0; i < gameUnits.length; i++) {
+    let unit = gameUnits[i];
+
+    if(unit.x > game.mousedownX && unit.y > game.mousedownY) {
+      if(unit.x < game.mouseX && unit.y < game.mouseY) {
+        gameUnits[i].selected = true;
+      }
+    }
+  }
+}
+
+// Target object used for storing the coordinates of a target along with the type
+// of target i.e. wood, stone, metal, enemy etc
 function Target(x, y, type) {
   this.x = x;
   this.y = y;
   this.type = type;
 }
 
+// Unit object used for storing the data about the type of unit as well as position
+// and everything else needed to make a unit function as that type of unit.
 function Unit(name, x, y, radius, color) {
   this.name = name;
   this.x = x;
   this.y = y;
   this.dx = 0;
   this.dy = 0;
+  this.attack = 1;
+  this.health = 100;
   this.radius = radius;
   this.color = color;
   this.speed = 0.5;
@@ -209,6 +277,8 @@ function deselectAllUnits() {
   for(let i = 0; i < gameUnits.length; i++) {
     gameUnits[i].selected = false;
   }
+
+  game.currentlySelectedUnits.length = 0;
 }
 
 function findSelectedBuilding(e) {
@@ -230,6 +300,7 @@ function pointIntercepts(x,y, building) {
   return true;
 }
 
+// Function used to detect if the mouse was clicked on a unit/
 function pointInterceptsUnit(x,y,unit) {
   let circleX = unit.x;
   let circleY = unit.y;
@@ -292,6 +363,19 @@ function drawCurrentResourcesUI() {
   drawUnits();
   drawResources();
   drawCurrentResourcesUI();
+
+  if(game.drawSelectionBox) {
+    let w = Math.abs(game.mousedownX - game.mouseX);
+    let h = Math.abs(game.mousedownY - game.mouseY);
+
+    game.ctx.beginPath();
+    game.ctx.strokeStyle = '#FFF';
+    game.ctx.strokeRect(game.mousedownX,
+                        game.mousedownY,
+                        w,
+                        h);
+    game.ctx.stroke();
+  }
 
   // Show the outline of the building before it is placed
   if(game.currentlySelectedMenuItem) {
@@ -420,7 +504,6 @@ function drawBuidings() {
   }
 }
 
-// TODO WORKING ON 
 function updateUnits() {
   for(let i = 0; i < gameUnits.length; i++) {
     gameUnits[i].move();
@@ -464,8 +547,21 @@ function drawResources() {
   }
 }
 
+// Used to add a building to the game world once one has been clicked in the build menu
 function addBuilding(building) {
- 
+  let cost = getBuildingCost(building);
+
+  let {w:woodCost, s:stoneCost, m:metalCost} = cost;
+
+  if(resources[0] >= woodCost && resources[1] >= stoneCost && resources[2] >= metalCost) {
+    resources[0] -= woodCost;
+    resources[1] -= stoneCost;
+    resources[2] -= metalCost;
+  } else {
+    return false;
+  }
+
+
   // Edge case: There are no buildings added yet 
   if(gameBuildings.length === 0) {
    
@@ -497,6 +593,13 @@ function addBuilding(building) {
   // can be added to the array
   gameBuildings.push(building);
   return true;
+}
+
+function getBuildingCost(building) {
+  switch(building.name) {
+    case 'house' : return {w:20, s:0, m:0};
+    case 'barracks' : return {w:50, s:0, m:0};
+  }
 }
 
 function collides(objA, objB) {

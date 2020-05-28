@@ -27,6 +27,12 @@ function Building(name, x, y, w, h, color) {
   }
 }
 
+function Target(x, y, type) {
+  this.x = x;
+  this.y = y;
+  this.type = type;
+}
+
 function Unit(name, x, y, radius, color) {
   this.name = name;
   this.x = x;
@@ -123,6 +129,7 @@ mainCanvas.addEventListener('mousedown', (e) => {
     let selectedBuilding = findSelectedBuilding(e);
 
     deselectAllBuildings();
+    deselectAllUnits();
     clearContextMenu();
     currentlySelectedBuilding = null;
     if(selectedBuilding) {  
@@ -132,9 +139,21 @@ mainCanvas.addEventListener('mousedown', (e) => {
   }
 });
 
+// Right click
+mainCanvas.addEventListener('contextmenu', (e) => {
+  e.preventDefault();
+  
+});
+
 function deselectAllBuildings() {
   for(let i = 0; i < gameBuildings.length; i++) {
     gameBuildings[i].selected = false;
+  }
+}
+
+function deselectAllUnits() {
+  for(let i = 0; i < gameUnits.length; i++) {
+    gameUnits[i].selected = false;
   }
 }
 
@@ -416,8 +435,6 @@ function addBuilding(building) {
   gameBuildings.push(building);
   return true;
 }
-
-
 
 function collides(objA, objB) {
 

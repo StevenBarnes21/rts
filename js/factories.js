@@ -41,9 +41,35 @@ function Unit(name, x, y, radius, color) {
   this.color = color;
   this.speed = 0;
   this.selected = false;
+  this.target = null;
   this.setSpeed = (speed) => {
     this.speed = speed;
   }
+  this.addTarget = (target) => {
+    this.target = target;
+  }
+  this.move = () => {
+    if(this.target && !inRange(this, this.target)) {
+      console.log('moving');
+      this.speed = 0.04;
+      let dx = this.target.x - this.x;
+      let dy = this.target.y - this.y;
+      this.x += dx * this.speed;
+      this.y += dy * this.speed;
+    }
+  }
+}
+
+function inRange(objA, objB) {
+  let dx = Math.abs(objA.x - objB.x);
+  let dy = Math.abs(objA.y - objB.y);
+  let total = dx + dy;
+  
+  if(total < 1) {
+    return true;
+  }
+
+  return false;
 }
 
 function Resource(name, x, y, w, h, color, health, amount) {
@@ -118,6 +144,7 @@ mainCanvas.addEventListener('click', (e) => {
 
   for(let i = 0; i < gameUnits.length; i++) {
     if(pointInterceptsUnit(x,y,gameUnits[i])){
+      console.log('unit selected');
       gameUnits[i].selected = true;
     }
   }
@@ -129,7 +156,7 @@ mainCanvas.addEventListener('mousedown', (e) => {
     let selectedBuilding = findSelectedBuilding(e);
 
     deselectAllBuildings();
-    deselectAllUnits();
+    // deselectAllUnits();
     clearContextMenu();
     currentlySelectedBuilding = null;
     if(selectedBuilding) {  
@@ -142,8 +169,18 @@ mainCanvas.addEventListener('mousedown', (e) => {
 // Right click
 mainCanvas.addEventListener('contextmenu', (e) => {
   e.preventDefault();
-  
+  let target = new Target(mouseX, mouseY, null);
+
+  for(let i = 0; i < gameUnits.length; i++) {
+    
+    if(gameUnits[i].selected) {
+      console.log('adding target');
+      console.log(target);
+      gameUnits[i].addTarget(target);
+    } 
+  }
 });
+
 
 function deselectAllBuildings() {
   for(let i = 0; i < gameBuildings.length; i++) {
@@ -236,6 +273,7 @@ const ctx = mainCanvas.getContext('2d');
 
   ctx.clearRect(0,0,500,500);
   drawBuidings();
+  updateUnits();
   drawUnits();
   drawResources();
   drawCurrentResourcesUI();
@@ -361,6 +399,13 @@ function drawBuidings() {
                      gameBuildings[i].h + 2);
       ctx.stroke();
     }
+  }
+}
+
+// TODO WORKING ON 
+function updateUnits() {
+  for(let i = 0; i < gameUnits.length; i++) {
+    gameUnits[i].move();
   }
 }
 

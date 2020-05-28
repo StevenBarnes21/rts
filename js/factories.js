@@ -16,6 +16,7 @@ let game = {
     game.mainCanvas.width = 500;
     game.mainCanvas.height = 500;
     game.ctx = game.mainCanvas.getContext('2d');
+    game.addEventListeners();
   },
   addEventListeners : function() {
     // House button clicked
@@ -98,7 +99,7 @@ let game = {
 
 };
 game.init();
-game.addEventListeners();
+
 
 (function setup() {
   addResources();
@@ -131,9 +132,12 @@ function Unit(name, x, y, radius, color) {
   this.name = name;
   this.x = x;
   this.y = y;
+  this.dx = 0;
+  this.dy = 0;
   this.radius = radius;
   this.color = color;
-  this.speed = 0;
+  this.speed = 0.5;
+  this.angle = 0;
   this.selected = false;
   this.target = null;
   this.setSpeed = (speed) => {
@@ -141,19 +145,21 @@ function Unit(name, x, y, radius, color) {
   }
   this.addTarget = (target) => {
     this.target = target;
+    this.dx = (this.target.x - this.x) / 100;
+    this.dy = (this.target.y - this.y) / 100;
+    this.angle = Math.atan2(this.dy, this.dx); // Calculate the angle
   }
   this.move = () => {
     if(this.target && !inRange(this, this.target)) {
-      console.log('moving');
-      this.speed = 0.04;
-      let dx = this.target.x - this.x;
-      let dy = this.target.y - this.y;
-      this.x += dx * this.speed;
-      this.y += dy * this.speed;
-    }
+      let xVelocity = this.speed * Math.cos(this.angle);
+      let yVelocity = this.speed * Math.sin(this.angle);
+      this.x += xVelocity;
+      this.y += yVelocity;
+    } 
   }
 }
 
+// Returns true when objA is within 1 pixel of objB
 function inRange(objA, objB) {
   let dx = Math.abs(objA.x - objB.x);
   let dy = Math.abs(objA.y - objB.y);
@@ -166,6 +172,8 @@ function inRange(objA, objB) {
   return false;
 }
 
+// Resource object such as wood, stone and metal. Each instance of this object
+// keeps track of it's position, health, color and the amount of resource left.
 function Resource(name, x, y, w, h, color, health, amount) {
   this.name = name;
   this.x = x;

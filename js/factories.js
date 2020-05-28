@@ -34,7 +34,7 @@ function Unit(name, x, y, radius, color) {
   this.radius = radius;
   this.color = color;
   this.speed = 0;
-
+  this.selected = false;
   this.setSpeed = (speed) => {
     this.speed = speed;
   }
@@ -105,6 +105,18 @@ mainCanvas.addEventListener('click', (e)=> {
   }
 });
 
+// Event handler for selecting units
+mainCanvas.addEventListener('click', (e) => {
+  let x = e.offsetX;
+  let y = e.offsetY;
+
+  for(let i = 0; i < gameUnits.length; i++) {
+    if(pointInterceptsUnit(x,y,gameUnits[i])){
+      gameUnits[i].selected = true;
+    }
+  }
+});
+
 // Selects a building when the building is clicked on
 mainCanvas.addEventListener('mousedown', (e) => {
   if(!currentlySelectedMenuItem) {
@@ -143,6 +155,19 @@ function pointIntercepts(x,y, building) {
   if(y > (building.y + building.h)) return false;
 
   return true;
+}
+
+function pointInterceptsUnit(x,y,unit) {
+  let circleX = unit.x;
+  let circleY = unit.y;
+  let circleRadius = unit.radius;
+  
+  let dx = Math.abs(circleX - x);
+  let dy = Math.abs(circleY - y);
+  let r = Math.hypot(dx, dy);
+  if(r <= circleRadius) return true;
+
+  return false;
 }
 
 const resourcesCanvas = document.getElementById('resources-canvas');
@@ -331,6 +356,18 @@ function drawUnits() {
             Math.PI * 2, 
             true);
     ctx.fill();
+
+    if(gameUnits[i].selected) {
+      ctx.fillStyle = 'yellow';
+      ctx.beginPath();
+      ctx.arc(gameUnits[i].x,
+              gameUnits[i].y,
+              gameUnits[i].radius+2,
+              0,
+              Math.PI * 2,
+              true);
+      ctx.stroke();
+    }
   }
 }
 
